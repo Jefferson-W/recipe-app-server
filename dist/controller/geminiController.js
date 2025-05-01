@@ -1,0 +1,71 @@
+"use strict";
+var _a;
+Object.defineProperty(exports, "__esModule", { value: true });
+const genai_1 = require("@google/genai");
+class GeminiController {
+}
+_a = GeminiController;
+GeminiController.generatePrompt = async (req, res) => {
+    try {
+        if (Object.keys(req.body).length === 0) {
+            return res.status(400).json({ body: "body must not be empty" });
+        }
+        const ai = new genai_1.GoogleGenAI({
+            vertexai: true,
+            project: 'recipe-app-1bbdc',
+            location: 'us-central1'
+        });
+        const { optionMeal, ingredients } = req.body;
+        const prompt = `Crie uma receita para o ${optionMeal} 
+        apenas com os seguintes ingredientes: ${ingredients}
+        e retorne um objeto com o objeto de titulo, objeto de introdução do prato, 
+        um objeto com os ingredientes, objeto com o modo de preparo, e objeto com observacoes,
+        siga o padrao: 
+        {
+          "titulo": "titulo",
+          "introducao": "introducao",
+          "ingredientes": [
+            {
+              "nome": "nome ingrediente",
+              "quantidade": "1 unidade"
+            },
+            {
+              "nome": "nome ingrediente",
+              "quantidade": "5 unidade"
+            }
+          ],
+          "modoDePreparo": [
+            "Aqueça uma frigideira em fogo médio.",
+            "Lorem ipsum
+            "Lorem ipsum
+            "Lorem ipsum
+            "Lorem ipsum
+            "Lorem ipsum"
+          ],
+          "observacoes": [
+            "Lorem ipsum",
+            "Lorem ipsum",
+            "Lorem ipsum"
+          ]
+        }`;
+        const tokenCount = prompt.split(/\s+/).length;
+        if (tokenCount > 200) {
+            return res.status(400).json({ error: "Token count exceeds 200" });
+        }
+        const result = await ai.models.generateContent({
+            model: "gemini-2.0-flash",
+            contents: prompt,
+            config: {
+                temperature: 0,
+                maxOutputTokens: 1512,
+            }
+        });
+        console.log(result.text);
+        return res.status(200).json({ response: result.text });
+    }
+    catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: 'Error generating response' });
+    }
+};
+exports.default = GeminiController;
